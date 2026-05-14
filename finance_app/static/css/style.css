@@ -1,0 +1,10 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.welcome-section {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+}
