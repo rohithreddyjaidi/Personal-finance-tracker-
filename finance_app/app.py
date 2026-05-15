@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 import click
 from flask import Flask, flash, redirect, render_template, request, url_for
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
 from config import Config
@@ -363,6 +364,108 @@ def reverse_transaction_from_balance(account, amount, transaction_type):
         account.balance = Decimal(account.balance or 0) - amount
     else:
         account.balance = Decimal(account.balance or 0) + amount
+
+
+def get_budget_form_data():
+    data = {
+        "user_id": None,
+        "category_id": None,
+        "monthly_limit": None,
+        "budget_month": None,
+        "notes": request.form.get("notes", "").strip() or None,
+    }
+    errors = []
+
+    user_id_text = request.form.get("user_id", "").strip()
+    if not user_id_text:
+        errors.append("User is required.")
+    else:
+        try:
+            data["user_id"] = int(user_id_text)
+        except ValueError:
+            errors.append("Please select a valid user.")
+
+    if data["user_id"] and db.session.get(User, data["user_id"]) is None:
+        errors.append("Please select a valid user.")
+
+    category_id_text = request.form.get("category_id", "").strip()
+    if not category_id_text:
+        errors.append("Category is required.")
+    else:
+        try:
+            data["category_id"] = int(category_id_text)
+        except ValueError:
+            errors.append("Please select a valid category.")
+
+    if data["category_id"] and db.session.get(Category, data["category_id"]) is None:
+        errors.append("Please select a valid category.")
+
+    monthly_limit_text = request.form.get("monthly_limit", "").strip()
+    if not monthly_limit_text:
+        errors.append("Monthly limit is required.")
+    else:
+        try:
+            monthly_limit = Decimal(monthly_limit_text)
+            if not monthly_limit.is_finite() or monthly_limit < 0:
+                raise InvalidOperation
+            data["monthly_limit"] = monthly_limit
+        except (InvalidOperation, ValueError):
+            errors.append("Monthly limit must be a valid number that is 0 or greater.")
+
+    budget_month, date_error = parse_form_date(
+        request.form.get("budget_month", ""),
+        "Budget month",
+        required=True,
+    )
+    if date_error:
+        errors.append(date_error)
+    data["budget_month"] = budget_month
+
+    return data, errors
+
+
+def validate_budget_duplicate(data, budget_id=None):
+    if not data["user_id"] or not data["category_id"] or not data["budget_month"]:
+        return None
+
+    existing_budget = Budget.query.filter_by(
+        user_id=data["user_id"],
+        category_id=data["category_id"],
+        budget_month=data["budget_month"],
+    ).first()
+
+    if existing_budget and existing_budget.budget_id != budget_id:
+        return "A budget already exists for this user, category, and month."
+
+    return None
+
+
+def budget_form_values(budget=None, data=None):
+    if data:
+        return {
+            "user_id": data["user_id"],
+            "category_id": data["category_id"],
+            "monthly_limit": request.form.get("monthly_limit", "").strip(),
+            "budget_month": request.form.get("budget_month", "").strip(),
+            "notes": data["notes"] or "",
+        }
+
+    if budget:
+        return {
+            "user_id": budget.user_id,
+            "category_id": budget.category_id,
+            "monthly_limit": budget.monthly_limit,
+            "budget_month": budget.budget_month.isoformat(),
+            "notes": budget.notes or "",
+        }
+
+    return {
+        "user_id": "",
+        "category_id": "",
+        "monthly_limit": "",
+        "budget_month": date.today().replace(day=1).isoformat(),
+        "notes": "",
+    }
 
 
 @app.route("/users")
@@ -828,6 +931,220 @@ def transactions_delete(transaction_id):
         flash(f"Error deleting transaction: {error}", "danger")
 
     return redirect(url_for("transactions_list"))
+
+
+@app.route("/budgets")
+def budgets_list():
+    budgets = (
+        Budget.query.join(User)
+        .join(Category)
+        .order_by(Budget.budget_month.desc(), User.last_name, Category.category_name)
+        .all()
+    )
+    return render_template("budgets/list.html", budgets=budgets)
+
+
+@app.route("/budgets/new", methods=["GET", "POST"])
+def budgets_new():
+    users = User.query.order_by(User.last_name, User.first_name).all()
+    categories = Category.query.order_by(Category.category_name).all()
+
+    if not users:
+        flash("Create a user before adding a budget.", "danger")
+        return redirect(url_for("users_new"))
+    if not categories:
+        flash("Create a category before adding a budget.", "danger")
+        return redirect(url_for("categories_new"))
+
+    if request.method == "POST":
+        data, errors = get_budget_form_data()
+        duplicate_error = validate_budget_duplicate(data)
+        if duplicate_error:
+            errors.append(duplicate_error)
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template(
+                "budgets/form.html",
+                form_title="Add Budget",
+                form_values=budget_form_values(data=data),
+                budget=None,
+                users=users,
+                categories=categories,
+            )
+
+        budget = Budget(**data)
+        db.session.add(budget)
+
+        try:
+            db.session.commit()
+            flash("Budget created successfully.", "success")
+            return redirect(url_for("budgets_list"))
+        except Exception as error:
+            db.session.rollback()
+            flash(f"Error creating budget: {error}", "danger")
+
+    return render_template(
+        "budgets/form.html",
+        form_title="Add Budget",
+        form_values=budget_form_values(),
+        budget=None,
+        users=users,
+        categories=categories,
+    )
+
+
+@app.route("/budgets/<int:budget_id>/edit", methods=["GET", "POST"])
+def budgets_edit(budget_id):
+    budget = Budget.query.get_or_404(budget_id)
+    users = User.query.order_by(User.last_name, User.first_name).all()
+    categories = Category.query.order_by(Category.category_name).all()
+
+    if request.method == "POST":
+        data, errors = get_budget_form_data()
+        duplicate_error = validate_budget_duplicate(data, budget_id=budget.budget_id)
+        if duplicate_error:
+            errors.append(duplicate_error)
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template(
+                "budgets/form.html",
+                form_title="Edit Budget",
+                form_values=budget_form_values(data=data),
+                budget=budget,
+                users=users,
+                categories=categories,
+            )
+
+        budget.user_id = data["user_id"]
+        budget.category_id = data["category_id"]
+        budget.monthly_limit = data["monthly_limit"]
+        budget.budget_month = data["budget_month"]
+        budget.notes = data["notes"]
+
+        try:
+            db.session.commit()
+            flash("Budget updated successfully.", "success")
+            return redirect(url_for("budgets_list"))
+        except Exception as error:
+            db.session.rollback()
+            flash(f"Error updating budget: {error}", "danger")
+
+    return render_template(
+        "budgets/form.html",
+        form_title="Edit Budget",
+        form_values=budget_form_values(budget=budget),
+        budget=budget,
+        users=users,
+        categories=categories,
+    )
+
+
+@app.route("/budgets/<int:budget_id>/delete", methods=["POST"])
+def budgets_delete(budget_id):
+    budget = Budget.query.get_or_404(budget_id)
+
+    try:
+        db.session.delete(budget)
+        db.session.commit()
+        flash("Budget deleted successfully.", "success")
+    except Exception as error:
+        db.session.rollback()
+        flash(f"Error deleting budget: {error}", "danger")
+
+    return redirect(url_for("budgets_list"))
+
+
+@app.route("/dashboard")
+def dashboard():
+    total_users = db.session.query(func.count(User.user_id)).scalar() or 0
+    total_accounts = db.session.query(func.count(Account.account_id)).scalar() or 0
+    total_transactions = (
+        db.session.query(func.count(Transaction.transaction_id)).scalar() or 0
+    )
+    total_debit_spending = (
+        db.session.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(Transaction.transaction_type == "debit")
+        .scalar()
+        or 0
+    )
+    total_credit_income = (
+        db.session.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(Transaction.transaction_type == "credit")
+        .scalar()
+        or 0
+    )
+    average_transaction_amount = (
+        db.session.query(func.coalesce(func.avg(Transaction.amount), 0)).scalar() or 0
+    )
+
+    spending_total = func.coalesce(func.sum(Transaction.amount), 0)
+    spending_by_category = (
+        db.session.query(
+            Category.category_name,
+            spending_total.label("total_spending"),
+        )
+        .join(Transaction)
+        .filter(Transaction.transaction_type == "debit")
+        .group_by(Category.category_id, Category.category_name)
+        .order_by(spending_total.desc())
+        .all()
+    )
+
+    year_value = func.year(Transaction.transaction_date)
+    month_value = func.month(Transaction.transaction_date)
+    transactions_by_month = (
+        db.session.query(
+            year_value.label("year"),
+            month_value.label("month"),
+            func.count(Transaction.transaction_id).label("transaction_count"),
+        )
+        .group_by(year_value, month_value)
+        .order_by(year_value, month_value)
+        .all()
+    )
+
+    largest_transaction = func.coalesce(func.max(Transaction.amount), 0)
+    largest_transaction_per_account = (
+        db.session.query(
+            Account.account_name,
+            largest_transaction.label("largest_amount"),
+        )
+        .outerjoin(Transaction)
+        .group_by(Account.account_id, Account.account_name)
+        .order_by(largest_transaction.desc())
+        .all()
+    )
+
+    category_count = func.count(Transaction.transaction_id)
+    top_categories = (
+        db.session.query(
+            Category.category_name,
+            category_count.label("transaction_count"),
+        )
+        .join(Transaction)
+        .group_by(Category.category_id, Category.category_name)
+        .order_by(category_count.desc())
+        .limit(5)
+        .all()
+    )
+
+    return render_template(
+        "dashboard.html",
+        total_users=total_users,
+        total_accounts=total_accounts,
+        total_transactions=total_transactions,
+        total_debit_spending=total_debit_spending,
+        total_credit_income=total_credit_income,
+        average_transaction_amount=average_transaction_amount,
+        spending_by_category=spending_by_category,
+        transactions_by_month=transactions_by_month,
+        largest_transaction_per_account=largest_transaction_per_account,
+        top_categories=top_categories,
+    )
 
 
 @app.cli.command("init-db")

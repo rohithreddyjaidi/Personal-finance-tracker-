@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Budgets - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Budgets</h1>
+    <a class="btn btn-primary" href="{{ url_for('budgets_new') }}">Add Budget</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>User</th>
+                <th>Category</th>
+                <th>Month</th>
+                <th>Monthly Limit</th>
+                <th>Notes</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for budget in budgets %}
+                <tr>
+                    <td>{{ budget.user.first_name }} {{ budget.user.last_name }}</td>
+                    <td>{{ budget.category.category_name }}</td>
+                    <td>{{ budget.budget_month }}</td>
+                    <td>{{ budget.monthly_limit }}</td>
+                    <td>{{ budget.notes or "N/A" }}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('budgets_edit', budget_id=budget.budget_id) }}">Edit</a>
+                        <form
+                            class="d-inline"
+                            method="post"
+                            action="{{ url_for('budgets_delete', budget_id=budget.budget_id) }}"
+                            onsubmit="return confirm('Delete this budget?');"
+                        >
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No budgets found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

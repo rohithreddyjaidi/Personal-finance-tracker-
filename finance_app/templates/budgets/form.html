@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ form_title }}</h1>
+    <a class="btn btn-outline-secondary" href="{{ url_for('budgets_list') }}">Back to Budgets</a>
+</div>
+
+<form method="post" class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label" for="user_id">User</label>
+        <select class="form-select" id="user_id" name="user_id" required>
+            <option value="">Select a user</option>
+            {% for user in users %}
+                <option
+                    value="{{ user.user_id }}"
+                    {% if form_values.user_id|string == user.user_id|string %}selected{% endif %}
+                >
+                    {{ user.first_name }} {{ user.last_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="category_id">Category</label>
+        <select class="form-select" id="category_id" name="category_id" required>
+            <option value="">Select a category</option>
+            {% for category in categories %}
+                <option
+                    value="{{ category.category_id }}"
+                    {% if form_values.category_id|string == category.category_id|string %}selected{% endif %}
+                >
+                    {{ category.category_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="monthly_limit">Monthly Limit</label>
+        <input
+            class="form-control"
+            id="monthly_limit"
+            name="monthly_limit"
+            value="{{ form_values.monthly_limit }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="budget_month">Budget Month</label>
+        <input
+            class="form-control"
+            id="budget_month"
+            name="budget_month"
+            type="date"
+            value="{{ form_values.budget_month }}"
+            required
+        >
+    </div>
+
+    <div class="col-12">
+        <label class="form-label" for="notes">Notes</label>
+        <input
+            class="form-control"
+            id="notes"
+            name="notes"
+            value="{{ form_values.notes }}"
+        >
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">Save Budget</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('budgets_list') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}
