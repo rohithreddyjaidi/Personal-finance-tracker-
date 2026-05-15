@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Categories</h1>
+    <a class="btn btn-primary" href="{{ url_for('categories_new') }}">Add Category</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>{{ category.category_name }}</td>
+                    <td>
+                        {% if category.category_type == "income" %}
+                            <span class="badge text-bg-success">income</span>
+                        {% else %}
+                            <span class="badge text-bg-warning">expense</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ category.description or "N/A" }}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('categories_edit', category_id=category.category_id) }}">Edit</a>
+                        <form
+                            class="d-inline"
+                            method="post"
+                            action="{{ url_for('categories_delete', category_id=category.category_id) }}"
+                            onsubmit="return confirm('Delete this category?');"
+                        >
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No categories found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

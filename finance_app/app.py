@@ -169,6 +169,202 @@ def account_form_values(account=None, data=None):
     }
 
 
+def get_category_form_data():
+    return {
+        "category_name": request.form.get("category_name", "").strip(),
+        "category_type": request.form.get("category_type", "").strip().lower(),
+        "description": request.form.get("description", "").strip() or None,
+    }
+
+
+def validate_category_data(data, category_id=None):
+    errors = []
+
+    if not data["category_name"]:
+        errors.append("Category name is required.")
+    if data["category_type"] not in ["income", "expense"]:
+        errors.append("Category type must be income or expense.")
+
+    if data["category_name"]:
+        existing_category = Category.query.filter_by(
+            category_name=data["category_name"]
+        ).first()
+        if existing_category and existing_category.category_id != category_id:
+            errors.append("Category name must be unique.")
+
+    return errors
+
+
+def category_form_values(category=None, data=None):
+    if data:
+        return {
+            "category_name": data["category_name"],
+            "category_type": data["category_type"],
+            "description": data["description"] or "",
+        }
+
+    if category:
+        return {
+            "category_name": category.category_name,
+            "category_type": category.category_type,
+            "description": category.description or "",
+        }
+
+    return {
+        "category_name": "",
+        "category_type": "expense",
+        "description": "",
+    }
+
+
+def parse_form_date(value, field_name, required=False):
+    value = value.strip()
+    if not value:
+        if required:
+            return None, f"{field_name} is required."
+        return None, None
+
+    try:
+        return date.fromisoformat(value), None
+    except ValueError:
+        return None, f"{field_name} must be a valid date."
+
+
+def get_transaction_form_data():
+    data = {
+        "account_id": None,
+        "category_id": None,
+        "amount": None,
+        "transaction_type": request.form.get("transaction_type", "").strip().lower(),
+        "description": request.form.get("description", "").strip() or None,
+        "merchant": request.form.get("merchant", "").strip() or None,
+        "transaction_date": None,
+        "posted_date": None,
+        "days_to_post": None,
+        "is_recurring": "is_recurring" in request.form,
+    }
+    errors = []
+
+    account_id_text = request.form.get("account_id", "").strip()
+    if not account_id_text:
+        errors.append("Account is required.")
+    else:
+        try:
+            data["account_id"] = int(account_id_text)
+        except ValueError:
+            errors.append("Please select a valid account.")
+
+    if data["account_id"] and db.session.get(Account, data["account_id"]) is None:
+        errors.append("Please select a valid account.")
+
+    category_id_text = request.form.get("category_id", "").strip()
+    if category_id_text:
+        try:
+            data["category_id"] = int(category_id_text)
+        except ValueError:
+            errors.append("Please select a valid category.")
+
+    if data["category_id"] and db.session.get(Category, data["category_id"]) is None:
+        errors.append("Please select a valid category.")
+
+    amount_text = request.form.get("amount", "").strip()
+    if not amount_text:
+        errors.append("Amount is required.")
+    else:
+        try:
+            amount = Decimal(amount_text)
+            if not amount.is_finite() or amount <= 0:
+                raise InvalidOperation
+            data["amount"] = amount
+        except (InvalidOperation, ValueError):
+            errors.append("Amount must be a valid number greater than 0.")
+
+    if data["transaction_type"] not in ["debit", "credit"]:
+        errors.append("Transaction type must be debit or credit.")
+
+    transaction_date, date_error = parse_form_date(
+        request.form.get("transaction_date", ""),
+        "Transaction date",
+        required=True,
+    )
+    if date_error:
+        errors.append(date_error)
+    data["transaction_date"] = transaction_date
+
+    posted_date, posted_date_error = parse_form_date(
+        request.form.get("posted_date", ""),
+        "Posted date",
+    )
+    if posted_date_error:
+        errors.append(posted_date_error)
+    data["posted_date"] = posted_date
+
+    if data["transaction_date"] and data["posted_date"]:
+        data["days_to_post"] = (
+            data["posted_date"] - data["transaction_date"]
+        ).days
+
+    return data, errors
+
+
+def transaction_form_values(transaction=None, data=None):
+    if data:
+        return {
+            "account_id": data["account_id"],
+            "category_id": data["category_id"] or "",
+            "amount": request.form.get("amount", "").strip(),
+            "transaction_type": data["transaction_type"],
+            "description": data["description"] or "",
+            "merchant": data["merchant"] or "",
+            "transaction_date": request.form.get("transaction_date", "").strip(),
+            "posted_date": request.form.get("posted_date", "").strip(),
+            "is_recurring": data["is_recurring"],
+        }
+
+    if transaction:
+        posted_date = ""
+        if transaction.posted_date:
+            posted_date = transaction.posted_date.isoformat()
+
+        return {
+            "account_id": transaction.account_id,
+            "category_id": transaction.category_id or "",
+            "amount": transaction.amount,
+            "transaction_type": transaction.transaction_type,
+            "description": transaction.description or "",
+            "merchant": transaction.merchant or "",
+            "transaction_date": transaction.transaction_date.isoformat(),
+            "posted_date": posted_date,
+            "is_recurring": transaction.is_recurring,
+        }
+
+    return {
+        "account_id": "",
+        "category_id": "",
+        "amount": "",
+        "transaction_type": "debit",
+        "description": "",
+        "merchant": "",
+        "transaction_date": date.today().isoformat(),
+        "posted_date": "",
+        "is_recurring": False,
+    }
+
+
+def apply_transaction_to_balance(account, amount, transaction_type):
+    if transaction_type == "credit":
+        account.balance = Decimal(account.balance or 0) + amount
+    else:
+        account.balance = Decimal(account.balance or 0) - amount
+
+
+def reverse_transaction_from_balance(account, amount, transaction_type):
+    if transaction_type == "credit":
+        account.balance = Decimal(account.balance or 0) - amount
+    else:
+        account.balance = Decimal(account.balance or 0) + amount
+
+
 @app.route("/users")
 def users_list():
     users = User.query.order_by(User.last_name, User.first_name).all()
@@ -383,6 +579,255 @@ def accounts_delete(account_id):
         flash(f"Error deleting account: {error}", "danger")
 
     return redirect(url_for("accounts_list"))
+
+
+@app.route("/categories")
+def categories_list():
+    categories = Category.query.order_by(Category.category_name).all()
+    return render_template("categories/list.html", categories=categories)
+
+
+@app.route("/categories/new", methods=["GET", "POST"])
+def categories_new():
+    if request.method == "POST":
+        data = get_category_form_data()
+        errors = validate_category_data(data)
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template(
+                "categories/form.html",
+                form_title="Add Category",
+                form_values=category_form_values(data=data),
+                category=None,
+            )
+
+        category = Category(**data)
+        db.session.add(category)
+
+        try:
+            db.session.commit()
+            flash("Category created successfully.", "success")
+            return redirect(url_for("categories_list"))
+        except Exception as error:
+            db.session.rollback()
+            flash(f"Error creating category: {error}", "danger")
+
+    return render_template(
+        "categories/form.html",
+        form_title="Add Category",
+        form_values=category_form_values(),
+        category=None,
+    )
+
+
+@app.route("/categories/<int:category_id>/edit", methods=["GET", "POST"])
+def categories_edit(category_id):
+    category = Category.query.get_or_404(category_id)
+
+    if request.method == "POST":
+        data = get_category_form_data()
+        errors = validate_category_data(data, category_id=category.category_id)
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template(
+                "categories/form.html",
+                form_title="Edit Category",
+                form_values=category_form_values(data=data),
+                category=category,
+            )
+
+        category.category_name = data["category_name"]
+        category.category_type = data["category_type"]
+        category.description = data["description"]
+
+        try:
+            db.session.commit()
+            flash("Category updated successfully.", "success")
+            return redirect(url_for("categories_list"))
+        except Exception as error:
+            db.session.rollback()
+            flash(f"Error updating category: {error}", "danger")
+
+    return render_template(
+        "categories/form.html",
+        form_title="Edit Category",
+        form_values=category_form_values(category=category),
+        category=category,
+    )
+
+
+@app.route("/categories/<int:category_id>/delete", methods=["POST"])
+def categories_delete(category_id):
+    category = Category.query.get_or_404(category_id)
+
+    if category.transactions or category.budgets:
+        flash(
+            "Cannot delete a category that has transactions or budgets.",
+            "danger",
+        )
+        return redirect(url_for("categories_list"))
+
+    try:
+        db.session.delete(category)
+        db.session.commit()
+        flash("Category deleted successfully.", "success")
+    except Exception as error:
+        db.session.rollback()
+        flash(f"Error deleting category: {error}", "danger")
+
+    return redirect(url_for("categories_list"))
+
+
+@app.route("/transactions")
+def transactions_list():
+    transactions = (
+        Transaction.query.join(Account)
+        .outerjoin(Category)
+        .order_by(Transaction.transaction_date.desc(), Transaction.transaction_id.desc())
+        .all()
+    )
+    return render_template("transactions/list.html", transactions=transactions)
+
+
+@app.route("/transactions/new", methods=["GET", "POST"])
+def transactions_new():
+    accounts = Account.query.order_by(Account.account_name).all()
+    categories = Category.query.order_by(Category.category_name).all()
+
+    if not accounts:
+        flash("Create an account before adding a transaction.", "danger")
+        return redirect(url_for("accounts_new"))
+
+    if request.method == "POST":
+        data, errors = get_transaction_form_data()
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template(
+                "transactions/form.html",
+                form_title="Add Transaction",
+                form_values=transaction_form_values(data=data),
+                transaction=None,
+                accounts=accounts,
+                categories=categories,
+            )
+
+        account = db.session.get(Account, data["account_id"])
+        transaction = Transaction(**data)
+
+        try:
+            db.session.add(transaction)
+            apply_transaction_to_balance(
+                account,
+                data["amount"],
+                data["transaction_type"],
+            )
+            db.session.commit()
+            flash("Transaction created successfully.", "success")
+            return redirect(url_for("transactions_list"))
+        except Exception as error:
+            db.session.rollback()
+            flash(f"Error creating transaction: {error}", "danger")
+
+    return render_template(
+        "transactions/form.html",
+        form_title="Add Transaction",
+        form_values=transaction_form_values(),
+        transaction=None,
+        accounts=accounts,
+        categories=categories,
+    )
+
+
+@app.route("/transactions/<int:transaction_id>/edit", methods=["GET", "POST"])
+def transactions_edit(transaction_id):
+    transaction = Transaction.query.get_or_404(transaction_id)
+    accounts = Account.query.order_by(Account.account_name).all()
+    categories = Category.query.order_by(Category.category_name).all()
+
+    if request.method == "POST":
+        data, errors = get_transaction_form_data()
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template(
+                "transactions/form.html",
+                form_title="Edit Transaction",
+                form_values=transaction_form_values(data=data),
+                transaction=transaction,
+                accounts=accounts,
+                categories=categories,
+            )
+
+        old_account = transaction.account
+        old_amount = Decimal(transaction.amount)
+        old_transaction_type = transaction.transaction_type
+        new_account = db.session.get(Account, data["account_id"])
+
+        try:
+            reverse_transaction_from_balance(
+                old_account,
+                old_amount,
+                old_transaction_type,
+            )
+            apply_transaction_to_balance(
+                new_account,
+                data["amount"],
+                data["transaction_type"],
+            )
+
+            transaction.account_id = data["account_id"]
+            transaction.category_id = data["category_id"]
+            transaction.amount = data["amount"]
+            transaction.transaction_type = data["transaction_type"]
+            transaction.description = data["description"]
+            transaction.merchant = data["merchant"]
+            transaction.transaction_date = data["transaction_date"]
+            transaction.posted_date = data["posted_date"]
+            transaction.days_to_post = data["days_to_post"]
+            transaction.is_recurring = data["is_recurring"]
+
+            db.session.commit()
+            flash("Transaction updated successfully.", "success")
+            return redirect(url_for("transactions_list"))
+        except Exception as error:
+            db.session.rollback()
+            flash(f"Error updating transaction: {error}", "danger")
+
+    return render_template(
+        "transactions/form.html",
+        form_title="Edit Transaction",
+        form_values=transaction_form_values(transaction=transaction),
+        transaction=transaction,
+        accounts=accounts,
+        categories=categories,
+    )
+
+
+@app.route("/transactions/<int:transaction_id>/delete", methods=["POST"])
+def transactions_delete(transaction_id):
+    transaction = Transaction.query.get_or_404(transaction_id)
+
+    try:
+        reverse_transaction_from_balance(
+            transaction.account,
+            Decimal(transaction.amount),
+            transaction.transaction_type,
+        )
+        db.session.delete(transaction)
+        db.session.commit()
+        flash("Transaction deleted successfully.", "success")
+    except Exception as error:
+        db.session.rollback()
+        flash(f"Error deleting transaction: {error}", "danger")
+
+    return redirect(url_for("transactions_list"))
 
 
 @app.cli.command("init-db")

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ form_title }}</h1>
+    <a class="btn btn-outline-secondary" href="{{ url_for('categories_list') }}">Back to Categories</a>
+</div>
+
+<form method="post" class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label" for="category_name">Category Name</label>
+        <input
+            class="form-control"
+            id="category_name"
+            name="category_name"
+            value="{{ form_values.category_name }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="category_type">Category Type</label>
+        <select class="form-select" id="category_type" name="category_type" required>
+            <option value="income" {% if form_values.category_type == "income" %}selected{% endif %}>income</option>
+            <option value="expense" {% if form_values.category_type == "expense" %}selected{% endif %}>expense</option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label" for="description">Description</label>
+        <input
+            class="form-control"
+            id="description"
+            name="description"
+            value="{{ form_values.description }}"
+        >
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">Save Category</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('categories_list') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}
