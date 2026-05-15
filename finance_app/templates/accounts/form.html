@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ form_title }}</h1>
+    <a class="btn btn-outline-secondary" href="{{ url_for('accounts_list') }}">Back to Accounts</a>
+</div>
+
+<form method="post" class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label" for="user_id">User</label>
+        <select class="form-select" id="user_id" name="user_id" required>
+            <option value="">Select a user</option>
+            {% for user in users %}
+                <option
+                    value="{{ user.user_id }}"
+                    {% if form_values.user_id|string == user.user_id|string %}selected{% endif %}
+                >
+                    {{ user.first_name }} {{ user.last_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="account_name">Account Name</label>
+        <input
+            class="form-control"
+            id="account_name"
+            name="account_name"
+            value="{{ form_values.account_name }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="account_type">Account Type</label>
+        <input
+            class="form-control"
+            id="account_type"
+            name="account_type"
+            value="{{ form_values.account_type }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="bank_name">Bank Name</label>
+        <input
+            class="form-control"
+            id="bank_name"
+            name="bank_name"
+            value="{{ form_values.bank_name }}"
+        >
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label" for="balance">Balance</label>
+        <input
+            class="form-control"
+            id="balance"
+            name="balance"
+            value="{{ form_values.balance }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label" for="currency">Currency</label>
+        <input
+            class="form-control"
+            id="currency"
+            name="currency"
+            maxlength="3"
+            value="{{ form_values.currency or 'USD' }}"
+        >
+    </div>
+
+    <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check mb-2">
+            <input
+                class="form-check-input"
+                id="is_active"
+                name="is_active"
+                type="checkbox"
+                {% if form_values.is_active %}checked{% endif %}
+            >
+            <label class="form-check-label" for="is_active">Active account</label>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">Save Account</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('accounts_list') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

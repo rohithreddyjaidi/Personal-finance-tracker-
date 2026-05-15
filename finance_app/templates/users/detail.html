@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}User Detail - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ user.first_name }} {{ user.last_name }}</h1>
+    <div>
+        <a class="btn btn-outline-secondary" href="{{ url_for('users_list') }}">Back to Users</a>
+        <a class="btn btn-primary" href="{{ url_for('users_edit', user_id=user.user_id) }}">Edit User</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="border rounded bg-white p-3">
+            <h2 class="h5">User Information</h2>
+            <dl class="mb-0">
+                <dt>Email</dt>
+                <dd>{{ user.email }}</dd>
+                <dt>Phone</dt>
+                <dd>{{ user.phone or "N/A" }}</dd>
+                <dt>Join Date</dt>
+                <dd>{{ user.join_date }}</dd>
+                <dt>Created At</dt>
+                <dd>{{ user.created_at }}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 mb-0">Accounts</h2>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('accounts_new') }}">Add Account</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Account</th>
+                        <th>Type</th>
+                        <th>Bank</th>
+                        <th>Balance</th>
+                        <th>Currency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in user.accounts %}
+                        <tr>
+                            <td>{{ account.account_name }}</td>
+                            <td>{{ account.account_type }}</td>
+                            <td>{{ account.bank_name or "N/A" }}</td>
+                            <td>{{ account.balance }}</td>
+                            <td>{{ account.currency }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No accounts found for this user.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

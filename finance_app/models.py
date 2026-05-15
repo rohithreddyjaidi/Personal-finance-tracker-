@@ -29,7 +29,7 @@ class Account(db.Model):
     account_type = db.Column(db.String(30), nullable=False)
     bank_name = db.Column(db.String(100))
     balance = db.Column(db.Numeric(12, 2), nullable=False, server_default="0.00")
-    currency = db.Column(db.String(3), nullable=False, server_default="USD")
+    currency = db.Column(db.CHAR(3), nullable=False, server_default="USD")
     is_active = db.Column(db.Boolean, nullable=False, server_default="1")
     last_updated = db.Column(
         db.DateTime,

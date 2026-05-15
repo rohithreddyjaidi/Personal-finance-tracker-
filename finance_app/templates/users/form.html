@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ form_title }}</h1>
+    <a class="btn btn-outline-secondary" href="{{ url_for('users_list') }}">Back to Users</a>
+</div>
+
+<form method="post" class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label" for="first_name">First Name</label>
+        <input
+            class="form-control"
+            id="first_name"
+            name="first_name"
+            value="{{ form_values.first_name }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="last_name">Last Name</label>
+        <input
+            class="form-control"
+            id="last_name"
+            name="last_name"
+            value="{{ form_values.last_name }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="email">Email</label>
+        <input
+            class="form-control"
+            id="email"
+            name="email"
+            type="email"
+            value="{{ form_values.email }}"
+            required
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="phone">Phone</label>
+        <input
+            class="form-control"
+            id="phone"
+            name="phone"
+            value="{{ form_values.phone }}"
+        >
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="join_date">Join Date</label>
+        <input
+            class="form-control"
+            id="join_date"
+            name="join_date"
+            type="date"
+            value="{{ form_values.join_date }}"
+        >
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">Save User</button>
+        {% if user %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('user_detail', user_id=user.user_id) }}">Cancel</a>
+        {% else %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('users_list') }}">Cancel</a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

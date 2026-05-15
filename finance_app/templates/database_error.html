@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Database Error - Finance Tracker{% endblock %}
+
+{% block content %}
+<section class="border rounded bg-white p-4">
+    <h1 class="h3">Database connection problem</h1>
+    <p class="mb-3">
+        The app is running, but it cannot connect to or read from the MySQL database right now.
+    </p>
+    <p class="mb-3">
+        Please make sure MySQL is installed, the MySQL service is running, the database exists,
+        the tables have been initialized, and the <code>DATABASE_URL</code> value in your
+        <code>.env</code> file is correct.
+    </p>
+    <a class="btn btn-primary" href="{{ url_for('index') }}">Back to Home</a>
+</section>
+{% endblock %}

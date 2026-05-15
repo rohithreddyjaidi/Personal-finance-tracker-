@@ -24,8 +24,9 @@ Personal Finance Management System
 - SQLAlchemy database configuration
 - Final 3NF database models
 - Flask CLI commands for database setup and seed data
+- CRUD pages for users and accounts
 
-CRUD features have not been added yet.
+CRUD pages for categories, transactions, budgets, and the dashboard have not been added yet.
 
 ## Setup
 
