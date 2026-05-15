@@ -13,7 +13,7 @@ class User(db.Model):
     created_at = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
+        server_default=db.text("CURRENT_TIMESTAMP"),
     )
 
     accounts = db.relationship("Account", back_populates="user")
@@ -34,8 +34,7 @@ class Account(db.Model):
     last_updated = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
-        onupdate=db.func.current_timestamp(),
+        server_default=db.text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
     )
 
     user = db.relationship("User", back_populates="accounts")
@@ -58,7 +57,7 @@ class Category(db.Model):
     created_at = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
+        server_default=db.text("CURRENT_TIMESTAMP"),
     )
 
     transactions = db.relationship("Transaction", back_populates="category")
@@ -97,13 +96,12 @@ class Transaction(db.Model):
     created_at = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
+        server_default=db.text("CURRENT_TIMESTAMP"),
     )
     updated_at = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
-        onupdate=db.func.current_timestamp(),
+        server_default=db.text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
     )
 
     account = db.relationship("Account", back_populates="transactions")
@@ -135,7 +133,7 @@ class Budget(db.Model):
     created_at = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
+        server_default=db.text("CURRENT_TIMESTAMP"),
     )
 
     user = db.relationship("User", back_populates="budgets")
