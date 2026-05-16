@@ -2,9 +2,142 @@ body {
     background-color: #f8f9fa;
 }
 
+.navbar.bg-primary {
+    background:
+        linear-gradient(90deg, #173b3f 0%, #24524f 45%, #8a5a20 100%) !important;
+    border-bottom: 4px solid #d8a24a;
+    box-shadow: 0 8px 18px rgba(23, 59, 63, 0.22);
+}
+
+.navbar-brand {
+    font-weight: 700;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    border-radius: 6px;
+    color: #f8efe0;
+    margin-left: 0.15rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+    background-color: rgba(255, 250, 240, 0.16);
+    color: #ffffff;
+}
+
 .welcome-section {
     background-color: #ffffff;
     border: 1px solid #dee2e6;
     border-radius: 8px;
     padding: 2rem;
+}
+
+.dashboard-shell {
+    background:
+        linear-gradient(135deg, #fffaf0 0%, #f3fbf7 42%, #f8f7ff 100%);
+    border: 1px solid #e2ded3;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.dashboard-heading {
+    border-left: 5px solid #0f766e;
+    padding-left: 1rem;
+}
+
+.dashboard-kicker {
+    color: #9a3412;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08rem;
+    text-transform: uppercase;
+}
+
+.dashboard-metric {
+    background-color: #ffffff;
+    border: 1px solid #d8d5cc;
+    border-radius: 8px;
+    box-shadow: 0 10px 22px rgba(43, 38, 30, 0.07);
+    min-height: 94px;
+    padding: 1rem;
+    position: relative;
+}
+
+.dashboard-metric::before {
+    content: "";
+    display: block;
+    height: 4px;
+    left: 1rem;
+    position: absolute;
+    right: 1rem;
+    top: 0.75rem;
+}
+
+.dashboard-label {
+    color: #554d43;
+    font-size: 0.82rem;
+    margin-top: 0.85rem;
+}
+
+.dashboard-value {
+    color: #18130f;
+    font-size: 1.45rem;
+    font-weight: 800;
+}
+
+.metric-teal::before {
+    background-color: #0f766e;
+}
+
+.metric-gold::before {
+    background-color: #c47f17;
+}
+
+.metric-coral::before {
+    background-color: #d05f3c;
+}
+
+.metric-rose::before {
+    background-color: #be3a5b;
+}
+
+.metric-green::before {
+    background-color: #3f7d3d;
+}
+
+.metric-indigo::before {
+    background-color: #4f5d95;
+}
+
+.dashboard-panel {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #d8d5cc;
+    border-radius: 8px;
+    box-shadow: 0 10px 22px rgba(43, 38, 30, 0.06);
+    padding: 1rem;
+}
+
+.dashboard-panel h2 {
+    color: #1e1a14;
+    margin-bottom: 0.85rem;
+}
+
+.dashboard-table thead th {
+    background-color: #173b3f;
+    color: #fffaf0;
+    font-weight: 700;
+}
+
+.dashboard-table tbody tr:nth-child(odd) td {
+    background-color: #fffaf0;
+}
+
+.dashboard-table tbody tr:nth-child(even) td {
+    background-color: #eef7f2;
+}
+
+.dashboard-table tbody tr:hover td {
+    background-color: #f6e5c7;
 }

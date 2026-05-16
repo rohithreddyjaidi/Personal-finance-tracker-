@@ -3,154 +3,165 @@
 {% block title %}Dashboard - Finance Tracker{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Dashboard</h1>
-</div>
+<section class="dashboard-shell">
+    <div class="dashboard-heading mb-4">
+        <p class="dashboard-kicker mb-1">Finance overview</p>
+        <h1 class="h3 mb-0">Dashboard</h1>
+    </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4 col-xl-2">
-        <div class="border rounded bg-white p-3 h-100">
-            <div class="text-muted small">Users</div>
-            <div class="fs-4 fw-bold">{{ total_users }}</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-xl-2">
+            <div class="dashboard-metric metric-teal">
+                <div class="dashboard-label">Users</div>
+                <div class="dashboard-value">{{ total_users }}</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="dashboard-metric metric-gold">
+                <div class="dashboard-label">Accounts</div>
+                <div class="dashboard-value">{{ total_accounts }}</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="dashboard-metric metric-coral">
+                <div class="dashboard-label">Transactions</div>
+                <div class="dashboard-value">{{ total_transactions }}</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="dashboard-metric metric-rose">
+                <div class="dashboard-label">Debit Spending</div>
+                <div class="dashboard-value">${{ "%.2f"|format(total_debit_spending|float) }}</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="dashboard-metric metric-green">
+                <div class="dashboard-label">Credit Income</div>
+                <div class="dashboard-value">${{ "%.2f"|format(total_credit_income|float) }}</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="dashboard-metric metric-indigo">
+                <div class="dashboard-label">Average Amount</div>
+                <div class="dashboard-value">${{ "%.2f"|format(average_transaction_amount|float) }}</div>
+            </div>
         </div>
     </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="border rounded bg-white p-3 h-100">
-            <div class="text-muted small">Accounts</div>
-            <div class="fs-4 fw-bold">{{ total_accounts }}</div>
-        </div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="border rounded bg-white p-3 h-100">
-            <div class="text-muted small">Transactions</div>
-            <div class="fs-4 fw-bold">{{ total_transactions }}</div>
-        </div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="border rounded bg-white p-3 h-100">
-            <div class="text-muted small">Debit Spending</div>
-            <div class="fs-4 fw-bold">${{ "%.2f"|format(total_debit_spending|float) }}</div>
-        </div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="border rounded bg-white p-3 h-100">
-            <div class="text-muted small">Credit Income</div>
-            <div class="fs-4 fw-bold">${{ "%.2f"|format(total_credit_income|float) }}</div>
-        </div>
-    </div>
-    <div class="col-md-4 col-xl-2">
-        <div class="border rounded bg-white p-3 h-100">
-            <div class="text-muted small">Average Amount</div>
-            <div class="fs-4 fw-bold">${{ "%.2f"|format(average_transaction_amount|float) }}</div>
-        </div>
-    </div>
-</div>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <h2 class="h5">Spending by Category</h2>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Category</th>
-                        <th>Total Spending</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in spending_by_category %}
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="dashboard-panel">
+                <h2 class="h5">Spending by Category</h2>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Total Spending</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in spending_by_category %}
                         <tr>
                             <td>{{ row.category_name }}</td>
                             <td>${{ "%.2f"|format(row.total_spending|float) }}</td>
                         </tr>
-                    {% else %}
+                            {% else %}
                         <tr>
                             <td colspan="2" class="text-center text-muted py-4">No spending data found.</td>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-lg-6">
-        <h2 class="h5">Transactions by Month</h2>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Year</th>
-                        <th>Month</th>
-                        <th>Transactions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in transactions_by_month %}
+        <div class="col-lg-6">
+            <div class="dashboard-panel">
+                <h2 class="h5">Transactions by Month</h2>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Month</th>
+                                <th>Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in transactions_by_month %}
                         <tr>
                             <td>{{ row.year }}</td>
                             <td>{{ row.month }}</td>
                             <td>{{ row.transaction_count }}</td>
                         </tr>
-                    {% else %}
+                            {% else %}
                         <tr>
                             <td colspan="3" class="text-center text-muted py-4">No monthly transaction data found.</td>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-lg-6">
-        <h2 class="h5">Largest Transaction per Account</h2>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Account</th>
-                        <th>Largest Transaction</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in largest_transaction_per_account %}
+        <div class="col-lg-6">
+            <div class="dashboard-panel">
+                <h2 class="h5">Largest Transaction per Account</h2>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Largest Transaction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in largest_transaction_per_account %}
                         <tr>
                             <td>{{ row.account_name }}</td>
                             <td>${{ "%.2f"|format(row.largest_amount|float) }}</td>
                         </tr>
-                    {% else %}
+                            {% else %}
                         <tr>
                             <td colspan="2" class="text-center text-muted py-4">No account data found.</td>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-lg-6">
-        <h2 class="h5">Top 5 Categories by Transaction Count</h2>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Category</th>
-                        <th>Transactions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in top_categories %}
+        <div class="col-lg-6">
+            <div class="dashboard-panel">
+                <h2 class="h5">Top 5 Categories by Transaction Count</h2>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in top_categories %}
                         <tr>
                             <td>{{ row.category_name }}</td>
                             <td>{{ row.transaction_count }}</td>
                         </tr>
-                    {% else %}
+                            {% else %}
                         <tr>
                             <td colspan="2" class="text-center text-muted py-4">No category transaction data found.</td>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}

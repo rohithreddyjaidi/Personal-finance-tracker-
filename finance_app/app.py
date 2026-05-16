@@ -28,7 +28,6 @@ def handle_database_error(error):
     app.logger.exception("Database error: %s", error)
     return render_template("database_error.html"), 503
 
-
 def get_user_form_data():
     join_date_value = request.form.get("join_date", "").strip()
 
